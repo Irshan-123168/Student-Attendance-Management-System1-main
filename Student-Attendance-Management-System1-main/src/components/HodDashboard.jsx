@@ -1,0 +1,224 @@
+import React from 'react';
+import { motion } from 'framer-motion';
+import {
+    Users,
+    Calendar,
+    ShieldCheck,
+    LayoutGrid,
+    GitBranch,
+    BookOpen,
+    Search,
+    Smartphone
+} from 'lucide-react';
+
+import { generateCSV, generateTextReport, downloadFile } from '../utils/reportUtils';
+
+const HodDashboard = ({ onNavigate, students = [], onUpdateStudent }) => {
+    // Live calculated data from students prop
+    const totalStudentsCount = students.length || 120;
+    const presentCount = students.filter(s => s.status === 'Present').length || 100;
+    const absentCount = students.filter(s => s.status === 'Absent').length || 12;
+    const onLeaveCount = students.filter(s => s.status === 'Late' || s.status === 'Leave').length || 8;
+
+    const overallPercentage = Math.round((presentCount / totalStudentsCount) * 100);
+
+
+
+    const containerVariants = {
+        hidden: { opacity: 0 },
+        visible: {
+            opacity: 1,
+            transition: { staggerChildren: 0.1 }
+        }
+    };
+
+    const itemVariants = {
+        hidden: { opacity: 0, y: 20 },
+        visible: {
+            opacity: 1,
+            y: 0,
+            transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] }
+        }
+    };
+
+    return (
+        <motion.div
+            className="space-y-8 pb-12"
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+        >
+            {/* Title Section */}
+            <motion.div variants={itemVariants} className="px-2 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <h1 className="text-5xl font-bold text-slate-900">
+                    HOD Dashboard
+                </h1>
+
+                <div className="flex items-center gap-3">
+                    <span className="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest bg-slate-100 px-3 py-1.5 rounded-full border border-slate-200">
+                        <ShieldCheck size={12} className="text-indigo-600" />
+                        Institutional Sync Active
+                    </span>
+                </div>
+            </motion.div>
+
+            {/* Institutional Filters */}
+            <motion.div className="bg-white rounded-[32px] p-8 shadow-sm border border-slate-100 mx-2" variants={itemVariants}>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                    <div className="space-y-3">
+                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1 flex items-center gap-2">
+                            <LayoutGrid size={14} className="text-indigo-500" /> Department
+                        </label>
+                        <select className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-3.5 px-4 text-xs font-bold text-slate-700 outline-none focus:border-indigo-500 transition-all appearance-none cursor-pointer">
+                            <option value="">All Departments</option>
+                            <option>Computer Science</option>
+                            <option>Electrical Eng</option>
+                            <option>Mechanical Eng</option>
+                        </select>
+                    </div>
+
+                    <div className="space-y-3">
+                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1 flex items-center gap-2">
+                            <GitBranch size={14} className="text-indigo-500" /> Branch
+                        </label>
+                        <select className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-3.5 px-4 text-xs font-bold text-slate-700 outline-none focus:border-indigo-500 transition-all appearance-none cursor-pointer">
+                            <option value="">All Branches</option>
+                            <option>CSE</option>
+                            <option>ECE</option>
+                            <option>EEE</option>
+                        </select>
+                    </div>
+
+                    <div className="space-y-3">
+                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1 flex items-center gap-2">
+                            <Calendar size={14} className="text-indigo-500" /> Semester
+                        </label>
+                        <select className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-3.5 px-4 text-xs font-bold text-slate-700 outline-none focus:border-indigo-500 transition-all appearance-none cursor-pointer">
+                            <option value="">All Semesters</option>
+                            <option>Semester I</option>
+                            <option>Semester II</option>
+                            <option>Semester III</option>
+                            <option>Semester IV</option>
+                            <option>Semester V</option>
+                        </select>
+                    </div>
+
+                    <div className="space-y-3">
+                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1 flex items-center gap-2">
+                            <BookOpen size={14} className="text-indigo-500" /> Subject
+                        </label>
+                        <select className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-3.5 px-4 text-xs font-bold text-slate-700 outline-none focus:border-indigo-500 transition-all appearance-none cursor-pointer">
+                            <option value="">All Subjects</option>
+                            <option>Advanced Algorithms</option>
+                            <option>Full Stack Web Dev</option>
+                            <option>Internet of Things</option>
+                        </select>
+                    </div>
+                </div>
+            </motion.div>
+
+            {/* 2. TOP STATS GRID */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 px-2">
+                <StatCard
+                    label="Total"
+                    value={totalStudentsCount.toString()}
+                    bgColor="#EEF2FF"
+                    textColor="#1e293b"
+                    variants={itemVariants}
+                />
+                <StatCard
+                    label="On Leave"
+                    value={onLeaveCount.toString()}
+                    bgColor="#F8FAFC"
+                    textColor="#1e293b"
+                    variants={itemVariants}
+                />
+                <StatCard
+                    label="Present"
+                    value={presentCount.toString()}
+                    bgColor="#EEF2FF"
+                    textColor="#1e293b"
+                    variants={itemVariants}
+                />
+            </div>
+
+
+            {/* 4. STUDENT INFRASTRUCTURE REGISTRY */}
+            <motion.div className="mx-2 bg-white rounded-[32px] p-10 shadow-sm border border-slate-100" variants={itemVariants}>
+                <div className="flex items-center justify-between mb-10">
+                    <div>
+                        <h2 className="text-3xl font-black text-slate-800 tracking-tight mb-1 italic">Student <span className="text-indigo-600">Infrastructure</span> Registry</h2>
+                        <p className="text-sm font-medium text-slate-400 uppercase tracking-widest">Departmental Contact & Registry Control</p>
+                    </div>
+                    <div className="relative group">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500" size={16} />
+                        <input 
+                            type="text" 
+                            placeholder="Locate Personnel..." 
+                            className="bg-slate-50 border border-slate-100 rounded-2xl py-3 px-12 text-xs font-bold w-64 focus:border-indigo-500/30 transition-all outline-none"
+                        />
+                    </div>
+                </div>
+
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                        <thead>
+                            <tr className="border-b border-slate-100">
+                                <th className="pb-6 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Name of the Student</th>
+                                <th className="pb-6 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Register Number</th>
+                                <th className="pb-6 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Mobile Number</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-50">
+                            {students.map(s => (
+                                <tr key={s.id} className="hover:bg-slate-50/50 transition-colors group">
+                                    <td className="py-6">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center font-black text-indigo-500 text-sm shadow-sm">
+                                                {s.name?.charAt(0)}
+                                            </div>
+                                            <div>
+                                                <p className="font-black text-slate-800 text-base tracking-tight">{s.name}</p>
+                                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest italic">{s.studentClass || 'CSE-A'}</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td className="py-6">
+                                        <span className="bg-slate-100 text-slate-600 px-4 py-1.5 rounded-xl font-mono text-xs font-black border border-slate-200 shadow-sm">
+                                            {s.roll || s.registerNumber}
+                                        </span>
+                                    </td>
+                                    <td className="py-6">
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
+                                                <Smartphone size={14} />
+                                            </div>
+                                            <span className="text-sm font-black text-slate-600 font-mono tracking-tighter">
+                                                {s.parentPhoneNumber || 'UNLINKED'}
+                                            </span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </motion.div>
+
+        </motion.div>
+    );
+};
+
+const StatCard = ({ label, value, bgColor, textColor, variants }) => (
+    <motion.div
+        className="rounded-3xl p-8 flex flex-col gap-4"
+        style={{ backgroundColor: bgColor }}
+        variants={variants}
+        whileHover={{ y: -5 }}
+    >
+        <p className="text-slate-600 text-xl font-bold">{label}</p>
+        <h3 className="text-7xl font-bold" style={{ color: textColor }}>{value}</h3>
+    </motion.div>
+);
+
+export default HodDashboard;
